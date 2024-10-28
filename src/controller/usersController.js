@@ -1,0 +1,78 @@
+const User = require('../models/usersModel');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/CatchAsync');
+
+exports.getAllUsers = catchAsync(async function (_, res) {
+  const users = await User.find({}, '+password');
+  res.status(200).json({
+    status: 'success',
+    results: users.length,
+    data: users,
+  });
+});
+
+exports.createNewUser = catchAsync(async function (req, res) {
+  const { name, password, passwordConfirm, email, image } = req.body;
+  const user = await User.create({
+    name,
+    password,
+    passwordConfirm,
+    email,
+    image,
+  });
+  user.password = undefined;
+  res.status(201).json({
+    status: 'success',
+    data: user,
+  });
+});
+
+exports.getUser = catchAsync(async function (req, res) {
+  const { id } = req.params;
+  const user = await User.findById(id);
+  res.status(200).json({
+    status: 'success',
+    data: user,
+  });
+});
+
+exports.updateUser = catchAsync(async function (req, res, next) {
+  const { id } = req.params;
+  if (req.body.password || req.body.confirmPassword)
+    return next(
+      new AppError(
+        "You can't change your password here. Please go to /forgotpassword in order to change it"
+      )
+    );
+  const filteredObj = filterObject(req.body, 'name', 'email', 'image');
+  const user = await User.findByIdAndUpdate(id, filteredObj, {
+    runValidators: true,
+    new: true,
+  });
+
+  if (!user) return next(new AppError('No user found for this id', 400));
+
+  res.status(200).json({
+    status: 'success',
+    data: user,
+  });
+});
+
+exports.deleteUser = catchAsync(async function (req, res) {
+  const { id } = req.params;
+  await User.findByIdAndDelete(id);
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+function filterObject(bodyObj, ...filterArr) {
+  const incomingKeysArr = Object.keys(bodyObj);
+  const filteredObj = {};
+  filterArr.forEach((wantedKey) => {
+    if (incomingKeysArr.includes(wantedKey))
+      filteredObj[wantedKey] = bodyObj[wantedKey];
+  });
+  return filteredObj;
+}
