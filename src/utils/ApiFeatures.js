@@ -1,23 +1,24 @@
 module.exports = class ApiFeatures {
   queryParams;
   query;
-  excludedFilter = ['sort', 'page', 'limit', 'fields'];
   constructor(query, queryParams) {
     this.query = query;
     this.queryParams = queryParams;
   }
   filter() {
     const newQueryParam = { ...this.queryParams };
-    this.excludedFilter.forEach((el) => delete newQueryParam[el]);
 
-    this.query = this.query.find(
-      JSON.parse(
-        JSON.stringify(newQueryParam).replaceAll(
-          /\b (gt|gte|lt|lte)\b/g,
-          (match) => '$' + match
-        )
-      )
+    const excludedFilter = ['sort', 'page', 'limit', 'fields'];
+    excludedFilter.forEach((el) => delete newQueryParam[el]);
+
+    const queryStr = JSON.stringify(newQueryParam).replace(
+      /\b (gt|gte|lt|lte)\b/g,
+      (match) => `$${match}`
     );
+
+    const parsedQueryParam = JSON.parse(queryStr);
+
+    this.query = this.query.find(parsedQueryParam);
 
     return this;
   }
@@ -38,10 +39,10 @@ module.exports = class ApiFeatures {
     return this;
   }
   limitFields() {
-    if (this.queryParams.limit) {
-      let limitBy = this.queryParams.limit;
-      limitBy = limitBy.split(',').join(' ');
-      this.query = this.query.select(limitBy);
+    if (this.queryParams.fields) {
+      let fields = this.queryParams.fields;
+      fields = fields.split(',').join(' ');
+      this.query = this.query.select(fields);
     } else this.query = this.query.select('-__v');
     return this;
   }
