@@ -12,9 +12,11 @@ module.exports = class ApiFeatures {
     excludedFilter.forEach((el) => delete newQueryParam[el]);
 
     const queryStr = JSON.stringify(newQueryParam).replace(
-      /\b (gt|gte|lt|lte)\b/g,
+      /\b(gt|gte|lt|lte)\b/g,
       (match) => `$${match}`
     );
+
+    console.log(queryStr);
 
     const parsedQueryParam = JSON.parse(queryStr);
 

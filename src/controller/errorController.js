@@ -17,10 +17,24 @@ module.exports = async function globalErrorHandler(err, _, res, _) {
 function sendErrorDev(err, res) {
   res.status(err.statusCode).json({
     status: err.status,
-    error: err,
     message: err.message,
     stack: err.stack,
   });
+}
+
+function sendErrorProd(error, res) {
+  if (error.isOperational)
+    res.status(error.statusCode).json({
+      status: error.status,
+      message: error.message,
+    });
+  else {
+    console.error(`Error🧨 ${error}`);
+    res.status(500).json({
+      status: 'error',
+      message: 'Something went wrong! Try again in a while',
+    });
+  }
 }
 
 function handleCastErrorProd(err) {
@@ -42,19 +56,4 @@ function handleDuplicateKeyErrorProd(err) {
     } of ${duplicateKeys}`,
     400
   );
-}
-
-function sendErrorProd(error, res) {
-  if (error.isOperational)
-    res.status(error.statusCode).json({
-      status: error.status,
-      message: error.message,
-    });
-  else {
-    console.error(`Error🧨 ${error}`);
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went wrong! Try again in a while',
-    });
-  }
 }

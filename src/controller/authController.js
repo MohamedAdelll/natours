@@ -3,16 +3,19 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/CatchAsync');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/email');
 
 function createSendToken(res, user, statusCode) {
   const token = user.signJWT(user._id);
 
   const cookieOptions = {
     httpOnly: true,
-    expires: process.env.JWT_COOKIE_EXPIREIN * 24 * 60 * 60 * 1000,
+    expires: new Date(process.env.JWT_COOKIE_EXPIRE_IN * 24 * 60 * 60 * 1000),
   };
 
   if (process.env.NODE_ENV.trim() === 'production') cookieOptions.secure = true;
+
+  user.password = undefined;
 
   res.cookie('jwt', token, cookieOptions);
   res.status(statusCode).json({
@@ -21,6 +24,12 @@ function createSendToken(res, user, statusCode) {
     token,
   });
 }
+
+exports.signup = catchAsync(async function (req, res, next) {
+  const { name, email, password, confirmPassword } = req.body;
+  const user = await User.create({ name, email, password, confirmPassword });
+  createSendToken(res, user, 201);
+});
 
 exports.login = catchAsync(async function (req, res, next) {
   const { email, password } = req.body;
@@ -38,24 +47,24 @@ exports.login = catchAsync(async function (req, res, next) {
 });
 
 exports.checkAuth = catchAsync(async function (req, _, next) {
-  const authorization = req.get('authorization');
-  const [authType, incomingToken] = authorization.split(' ');
+  const authorization = req.get('authorization') ?? '';
+  const [authType, incomingToken] = authorization?.split(' ');
   if (!authorization || authType != 'Bearer')
     return next(
       new AppError(
-        'Invalid token! Please sign back in to access this route.',
+        'Invalid token! Please sign back in to access this page.',
         401
       )
     );
 
   const decoded = jwt.verify(incomingToken, process.env.JWT_SECRET);
-  const { id } = decoded;
+  const { id, iat } = decoded;
   const user = await User.findOne({ _id: id });
   if (!user)
     return next(
       new AppError('Invalid token for this user! try signing in again.', 401)
     );
-  if (user.changedPasswordAfter(decoded.iat))
+  if (user.changedPasswordAfter(iat))
     return next(
       new AppError(
         'You changed your password recently! please log back in to gain access',
@@ -85,11 +94,32 @@ exports.forgotPassword = catchAsync(async function (req, res, next) {
     );
   const token = user.genRandomToken();
 
-  const url = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/resetpassword/${token}`;
+  //prettier-ignore
+  const url = `${req.protocol}://${req.get('host')}/api/v1/users/resetpassword?token=${token}`;
 
-  console.log(url);
+  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${url}.\nIf you didn't forget your password, please ignore this email!`;
+
+  try {
+    sendEmail({
+      email,
+      subject: 'Password Reset Token (valid for 10 minutes)',
+      message,
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email',
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.ResetTokenExpiresIn = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError(
+        'An error occurred while sending the email. Please try again later',
+        500
+      )
+    );
+  }
 });
 
 exports.resetPassword = catchAsync(async function (req, res, next) {
@@ -104,7 +134,6 @@ exports.resetPassword = catchAsync(async function (req, res, next) {
   });
   if (!user)
     return next(new AppError('Invalid token or token has expired! Try again'));
-  console.log(req.body);
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   user.passwordResetToken = undefined;

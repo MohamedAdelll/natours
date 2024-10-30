@@ -53,7 +53,7 @@ const userSchema = mongoose.Schema({
     default: true,
     select: false,
   },
-  passwordChangedAt: Date,
+  passwordChangedAt: Number,
   passwordResetToken: String,
   ResetTokenExpiresIn: Date,
 });
@@ -65,12 +65,10 @@ userSchema.pre('save', async function (next) {
       12
     );
     this.password = encryptedPass;
-    console.log('new password encrypted: ' + this.password);
     this.passwordConfirm = undefined;
   }
 
   if (this.isModified('password') && !this.isNew) {
-    console.log('passwordChangedAt got modified');
     this.passwordChangedAt = Date.now() - 1000;
   }
   next();
@@ -90,7 +88,7 @@ userSchema.methods.comparePasswords = async function (password) {
 
 userSchema.methods.changedPasswordAfter = function (iat) {
   if (this.passwordChangedAt) {
-    const passwordChangedTime = this.passwordChangedAt.getTime() / 1000;
+    const passwordChangedTime = this.passwordChangedAt / 1000;
     return iat < passwordChangedTime;
   }
   return false;
@@ -98,7 +96,7 @@ userSchema.methods.changedPasswordAfter = function (iat) {
 
 userSchema.methods.signJWT = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIREIN,
+    expiresIn: process.env.JWT_EXPIRE_IN,
   });
 
 userSchema.methods.genRandomToken = function () {

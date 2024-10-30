@@ -2,6 +2,11 @@ const User = require('../models/usersModel');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/CatchAsync');
 
+exports.getMe = function (req, _, next) {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.getAllUsers = catchAsync(async function (_, res) {
   const users = await User.find({}, '+password');
   res.status(200).json({
@@ -12,13 +17,14 @@ exports.getAllUsers = catchAsync(async function (_, res) {
 });
 
 exports.createNewUser = catchAsync(async function (req, res) {
-  const { name, password, passwordConfirm, email, image } = req.body;
+  const { name, password, passwordConfirm, email, image, role } = req.body;
   const user = await User.create({
     name,
     password,
     passwordConfirm,
     email,
     image,
+    role,
   });
   user.password = undefined;
   res.status(201).json({
@@ -60,8 +66,8 @@ exports.updateUser = catchAsync(async function (req, res, next) {
 
 exports.deleteUser = catchAsync(async function (req, res) {
   const { id } = req.params;
-  await User.findByIdAndDelete(id);
-  res.status(200).json({
+  await User.findByIdAndUpdate(id, { active: false });
+  res.status(204).json({
     status: 'success',
     data: null,
   });
