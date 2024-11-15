@@ -1,3 +1,4 @@
+const cookieParser = require('cookie-parser');
 const express = require('express');
 const app = express();
 const AppError = require('./utils/AppError');
@@ -6,11 +7,17 @@ const tourRouter = require('./routers/toursRouter');
 const usersRouter = require('./routers/usersRouter');
 const viewsRouter = require('./routers/viewsRouter');
 const reviewsRouter = require('./routers/reviewsRouter');
+const path = require('path');
 
 app.use(express.json());
+app.use(cookieParser());
 
+const static = path.join(__dirname, '..', 'public');
+
+app.use(express.static(static));
+const views = path.join(__dirname, 'views');
+app.set('views', views);
 app.set('view engine', 'pug');
-app.set('views', './views');
 
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', usersRouter);

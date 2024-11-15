@@ -26,7 +26,7 @@ function createSendToken(res, user, statusCode) {
   });
 }
 
-exports.signup = catchAsync(async function (req, res, next) {
+exports.signup = catchAsync(async function (req, res) {
   const { name, email, password, confirmPassword } = req.body;
   const user = await User.create({ name, email, password, confirmPassword });
   createSendToken(res, user, 201);
@@ -47,20 +47,28 @@ exports.login = catchAsync(async function (req, res, next) {
   createSendToken(res, user, 200);
 });
 
-module.exports.isLoggedIn = (req, res, next) => {
-  next();
+exports.isLoggedIn = (req, res, next) => {
+  console.log('isLoggedIn');
+  this.checkAuth(req, res, next, { throws: false });
 };
 
-exports.checkAuth = catchAsync(async function (req, _, next) {
-  const authorization = req.get('authorization') ?? '';
+exports.checkAuth = catchAsync(async function (
+  req,
+  _,
+  next,
+  { throws } = { throws: true }
+) {
+  const authorization = (req.get('authorization') || req.cookies.jwt) ?? '';
   const [authType, incomingToken] = authorization?.split(' ');
   if (!authorization || authType != 'Bearer')
-    return next(
-      new AppError(
-        'Invalid token! Please sign back in to access this page.',
-        401
-      )
-    );
+    return throws
+      ? next(
+          new AppError(
+            'Invalid token! Please sign back in to access this page.',
+            401
+          )
+        )
+      : next();
 
   const decoded = await promisify(jwt.verify)(
     incomingToken,
@@ -69,17 +77,25 @@ exports.checkAuth = catchAsync(async function (req, _, next) {
   const { id, iat } = decoded;
   const user = await User.findOne({ _id: id });
   if (!user)
-    return next(
-      new AppError('Invalid token for this user! try signing in again.', 401)
-    );
+    return throws
+      ? next(
+          new AppError(
+            'Invalid token for this user! try signing in again.',
+            401
+          )
+        )
+      : next();
   if (user.changedPasswordAfter(iat))
     return next(
-      new AppError(
-        'You changed your password recently! please log back in to gain access',
-        400
-      )
+      throws
+        ? new AppError(
+            'You changed your password recently! please log back in to gain access',
+            400
+          )
+        : undefined
     );
   req.user = user;
+  req.locals.user = user;
   next();
 });
 
