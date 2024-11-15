@@ -1,20 +1,15 @@
 const User = require('../models/usersModel');
 const AppError = require('../utils/AppError');
-const catchAsync = require('../utils/CatchAsync');
+const catchAsync = require('../utils/catchAsync');
+const factory = require('./factoryHandler');
 
 exports.getMe = function (req, _, next) {
   req.params.id = req.user.id;
   next();
 };
 
-exports.getAllUsers = catchAsync(async function (_, res) {
-  const users = await User.find({}, '+password');
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: users,
-  });
-});
+exports.getAllUsers = factory.getAll(User, () => [{}, '+password']);
+exports.getUser = factory.getOne(User);
 
 exports.createNewUser = catchAsync(async function (req, res) {
   const { name, password, passwordConfirm, email, image, role } = req.body;
@@ -28,15 +23,6 @@ exports.createNewUser = catchAsync(async function (req, res) {
   });
   user.password = undefined;
   res.status(201).json({
-    status: 'success',
-    data: user,
-  });
-});
-
-exports.getUser = catchAsync(async function (req, res) {
-  const { id } = req.params;
-  const user = await User.findById(id);
-  res.status(200).json({
     status: 'success',
     data: user,
   });

@@ -1,9 +1,10 @@
 const User = require('../models/usersModel');
 const AppError = require('../utils/AppError');
-const catchAsync = require('../utils/CatchAsync');
+const catchAsync = require('../utils/catchAsync');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/email');
+const { promisify } = require('../utils');
 
 function createSendToken(res, user, statusCode) {
   const token = user.signJWT(user._id);
@@ -46,6 +47,10 @@ exports.login = catchAsync(async function (req, res, next) {
   createSendToken(res, user, 200);
 });
 
+module.exports.isLoggedIn = (req, res, next) => {
+  next();
+};
+
 exports.checkAuth = catchAsync(async function (req, _, next) {
   const authorization = req.get('authorization') ?? '';
   const [authType, incomingToken] = authorization?.split(' ');
@@ -57,7 +62,10 @@ exports.checkAuth = catchAsync(async function (req, _, next) {
       )
     );
 
-  const decoded = jwt.verify(incomingToken, process.env.JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(
+    incomingToken,
+    process.env.JWT_SECRET
+  );
   const { id, iat } = decoded;
   const user = await User.findOne({ _id: id });
   if (!user)
