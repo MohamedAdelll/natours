@@ -16,8 +16,6 @@ module.exports = class ApiFeatures {
       (match) => `$${match}`
     );
 
-    console.log(queryStr);
-
     const parsedQueryParam = JSON.parse(queryStr);
 
     this.query = this.query.find(parsedQueryParam);

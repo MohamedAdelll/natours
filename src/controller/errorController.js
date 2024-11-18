@@ -1,37 +1,47 @@
 const AppError = require('../utils/AppError');
 const lodash = require('lodash');
 
-module.exports = async function globalErrorHandler(err, _, res, _) {
+module.exports = async function globalErrorHandler(err, req, res, _) {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  if (process.env.NODE_ENV.trim() === 'development') sendErrorDev(err, res);
+  if (process.env.NODE_ENV.trim() === 'development')
+    sendErrorDev(err, req, res);
   else if (process.env.NODE_ENV.trim() === 'production') {
     if (err.name === 'CastError') err = handleCastErrorProd(err);
     if (err.name === 'ValidationError') err = handleValidationErrorProd(err);
     if (err.codeName === 'DuplicateKey') err = handleDuplicateKeyErrorProd(err);
-    sendErrorProd(err, res);
+    sendErrorProd(err, req, res);
   }
 };
 
-function sendErrorDev(err, res) {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    stack: err.stack,
-  });
+function sendErrorDev(err, req, res) {
+  if (req.originalUrl.startsWith('/api'))
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      stack: err.stack,
+    });
+
+  res.status(err.statusCode).render('error', { msg: err.message });
 }
 
-function sendErrorProd(error, res) {
-  if (error.isOperational)
-    res.status(error.statusCode).json({
-      status: error.status,
-      message: error.message,
-    });
-  else {
+function sendErrorProd(error, req, res) {
+  if (error.isOperational) {
+    if (req.originalUrl.startsWith('/api'))
+      return res.status(error.statusCode).json({
+        status: error.status,
+        message: error.message,
+      });
+    res.status(error.statusCode).render('error', { msg: error.message });
+  } else {
     console.error(`Error🧨 ${error}`);
-    res.status(500).json({
-      status: 'error',
+    if (req.originalUrl.startsWith('/api'))
+      return res.status(500).json({
+        status: 'error',
+        message: 'Something went wrong! Try again in a while',
+      });
+    res.status(500).render('error', {
       message: 'Something went wrong! Try again in a while',
     });
   }

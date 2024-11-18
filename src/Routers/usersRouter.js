@@ -3,6 +3,7 @@ const router = Router();
 const usersController = require('../controller/usersController');
 const authController = require('../controller/authController');
 
+router.route('/logout').get(authController.logout);
 router.route('/login').post(authController.login);
 router.route('/signup').post(authController.signup);
 router.route('/forgotPassword').post(authController.forgotPassword);

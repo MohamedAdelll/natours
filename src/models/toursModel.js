@@ -13,6 +13,7 @@ const tourSchema = new mongoose.Schema(
       minlength: [10, 'A tour must have at least 10 characters'],
       maxlength: [40, 'A tour must have at most 40 characters'],
     },
+    slug: String,
     duration: { type: Number, required: [true, 'A tour must have a duration'] },
     maxGroupSize: { type: Number, default: 25 },
     difficulty: {
@@ -51,18 +52,16 @@ const tourSchema = new mongoose.Schema(
     secretTour: { type: Boolean, default: false, select: false },
     images: [String],
     startDates: [Date],
-    startLocation: [
-      {
-        type: {
-          type: String,
-          default: 'Point',
-          enum: ['Point'],
-        },
-        coordinates: [Number],
-        address: String,
-        description: String,
+    startLocation: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
       },
-    ],
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
     locations: [
       {
         type: {
@@ -71,7 +70,6 @@ const tourSchema = new mongoose.Schema(
           enum: ['Point'],
         },
         coordinates: [Number],
-        address: String,
         description: String,
         day: Number,
       },

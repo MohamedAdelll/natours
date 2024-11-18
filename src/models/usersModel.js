@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema({
     trim: true,
     lowercase: true,
   },
-  image: {
+  photo: {
     type: String,
   },
   password: {
@@ -94,10 +94,11 @@ userSchema.methods.changedPasswordAfter = function (iat) {
   return false;
 };
 
-userSchema.methods.signJWT = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
+userSchema.methods.signJWT = function () {
+  return jwt.sign({ id: this.id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE_IN,
   });
+};
 
 userSchema.methods.genRandomToken = function () {
   const randomToken = crypto.randomBytes(32).toString('hex');

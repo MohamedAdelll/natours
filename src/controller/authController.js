@@ -7,11 +7,13 @@ const sendEmail = require('../utils/email');
 const { promisify } = require('../utils');
 
 function createSendToken(res, user, statusCode) {
-  const token = user.signJWT(user._id);
+  const token = user.signJWT();
 
   const cookieOptions = {
     httpOnly: true,
-    expires: new Date(process.env.JWT_COOKIE_EXPIRE_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE_IN * 24 * 60 * 60 * 1000
+    ),
   };
 
   if (process.env.NODE_ENV.trim() === 'production') cookieOptions.secure = true;
@@ -32,6 +34,14 @@ exports.signup = catchAsync(async function (req, res) {
   createSendToken(res, user, 201);
 });
 
+exports.logout = function (_, res) {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+};
+
 exports.login = catchAsync(async function (req, res, next) {
   const { email, password } = req.body;
 
@@ -48,19 +58,19 @@ exports.login = catchAsync(async function (req, res, next) {
 });
 
 exports.isLoggedIn = (req, res, next) => {
-  console.log('isLoggedIn');
   this.checkAuth(req, res, next, { throws: false });
 };
 
 exports.checkAuth = catchAsync(async function (
   req,
-  _,
+  res,
   next,
   { throws } = { throws: true }
 ) {
-  const authorization = (req.get('authorization') || req.cookies.jwt) ?? '';
-  const [authType, incomingToken] = authorization?.split(' ');
-  if (!authorization || authType != 'Bearer')
+  const token =
+    (req.get('authorization')?.split(' ')?.at(-1) || req.cookies.jwt) ?? '';
+
+  if (!token)
     return throws
       ? next(
           new AppError(
@@ -70,10 +80,11 @@ exports.checkAuth = catchAsync(async function (
         )
       : next();
 
-  const decoded = await promisify(jwt.verify)(
-    incomingToken,
-    process.env.JWT_SECRET
-  );
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  if (!decoded)
+    return throws
+      ? next('Invalid token for this user! try signing in again.', 401)
+      : next();
   const { id, iat } = decoded;
   const user = await User.findOne({ _id: id });
   if (!user)
@@ -86,16 +97,16 @@ exports.checkAuth = catchAsync(async function (
         )
       : next();
   if (user.changedPasswordAfter(iat))
-    return next(
-      throws
-        ? new AppError(
+    return throws
+      ? next(
+          new AppError(
             'You changed your password recently! please log back in to gain access',
             400
           )
-        : undefined
-    );
+        )
+      : next();
   req.user = user;
-  req.locals.user = user;
+  res.locals.user = user;
   next();
 });
 
