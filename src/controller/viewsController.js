@@ -4,11 +4,8 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
 exports.getOverview = catchAsync(async (req, res, next) => {
-  // 1) Get tour data from collection
   const tours = await Tour.find();
 
-  // 2) Build template
-  // 3) Render that template using tour data from 1)
   res.status(200).render('overview', {
     title: 'All Tours',
     tours,
@@ -16,7 +13,6 @@ exports.getOverview = catchAsync(async (req, res, next) => {
 });
 
 exports.getTour = catchAsync(async (req, res, next) => {
-  // 1) Get the data, for the requested tour (including reviews and guides)
   const tour = await Tour.findOne({ slug: req.params.slug })
     .populate({
       path: 'reviews',
@@ -31,15 +27,13 @@ exports.getTour = catchAsync(async (req, res, next) => {
     return next(new AppError('There is no tour with that name.', 404));
   }
 
-  // 2) Build template
-  // 3) Render template using data from 1)
   res.status(200).render('tour', {
     title: `${tour.name} Tour`,
     tour,
   });
 });
 
-exports.getMyTours = catchAsync(async (req, res, next) => {
+exports.getMyTours = catchAsync(async (req, res) => {
   const bookings = await Booking.find({ user: req.user.id });
 
   const tourIDs = bookings.map((el) => el.tour);
@@ -51,19 +45,19 @@ exports.getMyTours = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getLoginForm = (req, res) => {
+exports.getLoginForm = (_req, res) => {
   res.status(200).render('login', {
     title: 'Log into your account',
   });
 };
 
-exports.getAccount = (req, res) => {
+exports.getAccount = (_req, res) => {
   res.status(200).render('account', {
     title: 'Your account',
   });
 };
 
-exports.updateUserData = catchAsync(async (req, res, next) => {
+exports.updateUserData = catchAsync(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,
     {

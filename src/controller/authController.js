@@ -3,7 +3,7 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
 const { promisify } = require('../utils');
 
 function createSendToken(res, user, statusCode) {
@@ -135,11 +135,14 @@ exports.forgotPassword = catchAsync(async function (req, res, next) {
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${url}.\nIf you didn't forget your password, please ignore this email!`;
 
   try {
-    sendEmail({
-      email,
-      subject: 'Password Reset Token (valid for 10 minutes)',
-      message,
-    });
+    const email = new Email(
+      {
+        email: user.email,
+        name: user.name,
+      },
+      url
+    );
+    await email.sendPasswordReset();
     res.status(200).json({
       status: 'success',
       message: 'Token sent to email',
