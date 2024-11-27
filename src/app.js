@@ -4,6 +4,8 @@ const app = express();
 const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const AppError = require('./utils/AppError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -12,8 +14,6 @@ const usersRouter = require('./routers/usersRouter');
 const viewsRouter = require('./routers/viewsRouter');
 const reviewsRouter = require('./routers/reviewsRouter');
 const bookingsRouter = require('./routers/bookingsRouter');
-const xss = require('xss-clean');
-const hpp = require('hpp');
 
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json({ limit: '10kb' }));
