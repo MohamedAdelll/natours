@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "set NODE_ENV=development && nodemon ./src/index.js",
+    "start": "node src/",
+    "dev": "set NODE_ENV=development && nodemon ./src/index.js",
     "start:prod": "set NODE_ENV=production && nodemon ./src/index.js",
     "build:js": "parcel ./public/js/index.js --dist-dir ./public/js/dist"
   },
