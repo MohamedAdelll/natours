@@ -7,7 +7,7 @@ const app = require('./app');
 const port = process.env.PORT || 5555;
 
 const server = app.listen(port, () => {
-  console.log(`working on http://localhost:5555`);
+  console.log(`listening on port ${port}`);
 });
 
 process.on('unhandledRejection', (err) => {
