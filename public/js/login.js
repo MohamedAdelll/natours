@@ -12,8 +12,6 @@ export const login = async (email, password) => {
         email,
         password,
       },
-      credentials: 'include',
-      withCredentials: true,
     });
     if (data.status === 'success') {
       showAlert('success', 'Logged in successfully!');

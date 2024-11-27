@@ -1,6 +1,6 @@
 const express = require('express');
-const tourController = require('../controller/toursController.js');
-const authController = require('../controller/authController.js');
+const tourController = require('../controllers/toursController.js');
+const authController = require('../controllers/authController.js');
 const reviewsRouter = require('./reviewsRouter.js');
 
 const router = express.Router();
@@ -32,6 +32,8 @@ router
   .post(
     authController.checkAuth,
     authController.restrictTo('admin', 'leadGuide'),
+    tourController.uploadTourImages,
+    tourController.resizeTourImages,
     tourController.createNewTour
   );
 
@@ -41,6 +43,8 @@ router
   .patch(
     authController.checkAuth,
     authController.restrictTo('admin', 'leadGuide'),
+    tourController.uploadTourImages,
+    tourController.resizeTourImages,
     tourController.editTour
   )
   .delete(

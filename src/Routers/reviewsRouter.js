@@ -1,6 +1,6 @@
 const { Router } = require('express');
-const reviewController = require('../controller/reviewsController.js');
-const { restrictTo, checkAuth } = require('../controller/authController.js');
+const reviewController = require('../controllers/reviewsController.js');
+const { restrictTo, checkAuth } = require('../controllers/authController.js');
 
 const router = Router({ mergeParams: true });
 

@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const router = Router();
-const usersController = require('../controller/usersController');
-const authController = require('../controller/authController');
+const usersController = require('../controllers/usersController');
+const authController = require('../controllers/authController');
 
 router.route('/logout').get(authController.logout);
 router.route('/login').post(authController.login);
@@ -11,12 +11,17 @@ router.route('/resetPassword/:token').patch(authController.resetPassword);
 
 router.use(authController.checkAuth);
 
-router.route('/updatePassword').post(authController.updatePassword);
+router.route('/updatePassword').patch(authController.updatePassword);
 
 router
   .route('/me')
   .get(usersController.getMe, usersController.getUser)
-  .patch(usersController.getMe, usersController.updateUser)
+  .patch(
+    usersController.getMe,
+    usersController.uploadUserPhoto,
+    usersController.resizeUserPhoto,
+    usersController.updateUser
+  )
   .delete(usersController.getMe, usersController.deleteUser);
 
 router.use(authController.restrictTo('admin'));
