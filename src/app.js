@@ -17,11 +17,15 @@ const reviewsRouter = require('./routers/reviewsRouter');
 const bookingsRouter = require('./routers/bookingsRouter');
 const bookingsController = require('./controllers/bookingsController');
 
+app.set('trust proxy');
+app.use(cors({ credentials: true, origin: true }));
+
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
 });
+
 app.use('/api', limiter);
 
 app.post(
@@ -29,8 +33,6 @@ app.post(
   express.raw({ type: 'application/json' }),
   bookingsController.webhookCheckout
 );
-
-app.use(cors({ credentials: true, origin: true }));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
@@ -57,7 +59,6 @@ const static = path.join(__dirname, '..', 'public');
 app.use(express.static(static));
 
 const views = path.join(__dirname, 'views');
-app.set('trust proxy');
 app.set('views', views);
 app.set('view engine', 'pug');
 
