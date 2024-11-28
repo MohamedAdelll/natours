@@ -38,3 +38,28 @@ export const logout = async () => {
     showAlert('error', 'Error logging out! Try again.');
   }
 };
+
+export const signup = async (name, email, password, passwordConfirm) => {
+  try {
+    const { data } = await axios({
+      url: '/api/v1/users/signup',
+      method: 'POST',
+      data: {
+        name,
+        email,
+        password,
+        passwordConfirm,
+      },
+    });
+    if (data.status === 'success') {
+      showAlert('success', 'Signed up successfully!');
+      window.setTimeout(() => {
+        location.assign('/');
+      }, 1500);
+    } else {
+      showAlert('error', data.message);
+    }
+  } catch (err) {
+    showAlert('error', "Something went wrong! Couldn't sign up.");
+  }
+};

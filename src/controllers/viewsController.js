@@ -46,8 +46,20 @@ exports.getMyTours = catchAsync(async (req, res) => {
 });
 
 exports.getLoginForm = (_req, res) => {
+  if (res.locals.user) {
+    return res.redirect('/');
+  }
   res.status(200).render('login', {
     title: 'Log into your account',
+  });
+};
+
+exports.getSignupForm = (_req, res) => {
+  if (res.locals.user) {
+    return res.redirect('/');
+  }
+  res.status(200).render('signup', {
+    title: 'Create your account',
   });
 };
 
