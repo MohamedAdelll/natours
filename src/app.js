@@ -17,7 +17,7 @@ const reviewsRouter = require('./routers/reviewsRouter');
 const bookingsRouter = require('./routers/bookingsRouter');
 const bookingsController = require('./controllers/bookingsController');
 
-app.set('trust proxy');
+app.set('trust proxy', 1);
 app.use(cors({ credentials: true, origin: true }));
 
 const limiter = rateLimit({
