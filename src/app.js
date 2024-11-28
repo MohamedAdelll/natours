@@ -30,7 +30,7 @@ app.use('/api', limiter);
 
 app.post(
   '/checkout-webhook',
-  express.raw({ type: 'application/json' }),
+  express.json({ type: 'application/json' }),
   bookingsController.webhookCheckout
 );
 
