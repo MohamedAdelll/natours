@@ -3,6 +3,7 @@ const app = express();
 
 const path = require('path');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -14,8 +15,23 @@ const usersRouter = require('./routers/usersRouter');
 const viewsRouter = require('./routers/viewsRouter');
 const reviewsRouter = require('./routers/reviewsRouter');
 const bookingsRouter = require('./routers/bookingsRouter');
+const bookingsController = require('./controllers/bookingsController');
+
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many requests from this IP, please try again in an hour!',
+});
+app.use('/api', limiter);
+
+app.post(
+  '/checkout-webhook',
+  express.raw({ type: 'application/json' }),
+  bookingsController.webhookCheckout
+);
 
 app.use(cors({ credentials: true, origin: true }));
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
