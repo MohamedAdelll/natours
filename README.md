@@ -146,9 +146,6 @@ If you wish to play around with the code base in your local environment, do the 
 * Start the server.
 * Your app should be running just fine.
 ```
-#### Demo-`.env` file :
-
-![demo-env-file](https://github.com/lgope/Natours/assets/58518192/cf5b833f-2a48-48a1-aeb3-5ffea8967e33)
 
 ## Installation 🛠️
 
